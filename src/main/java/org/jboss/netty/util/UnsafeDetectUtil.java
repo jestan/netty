@@ -15,6 +15,7 @@
  */
 package org.jboss.netty.util;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -29,16 +30,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class UnsafeDetectUtil {
 
+    private static final String JDK_LINK_TRANSFER_QUEUE = "java.util.concurrent.LinkedTransferQueue";
     private static final String UNSAFE = "sun.misc.Unsafe";
-    private static final boolean UNSAFE_FOUND = isUnsafeFound(AtomicInteger.class.getClassLoader());
 
-    public static boolean isUnsafeFound(ClassLoader loader) {
+    private static final boolean JDK_LINK_TRANSFER_QUEUE_FOUND = isClassFound(JDK_LINK_TRANSFER_QUEUE, BlockingQueue.class.getClassLoader());
+    private static final boolean UNSAFE_FOUND = isClassFound(UNSAFE, AtomicInteger.class.getClassLoader());
+
+    public static boolean isClassFound(String className, ClassLoader loader) {
         try {
-            Class.forName(UNSAFE, true, loader);
+            Class.forName(className, true, loader);
             return true;
         } catch (ClassNotFoundException e) {
             return false;
         }
+    }
+
+    public static boolean isJdkLinkTransferQueueFound() {
+        return JDK_LINK_TRANSFER_QUEUE_FOUND;
     }
 
     public static boolean isUnsafeFound() {
