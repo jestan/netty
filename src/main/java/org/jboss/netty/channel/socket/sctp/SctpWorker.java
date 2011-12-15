@@ -80,7 +80,7 @@ class SctpWorker implements Runnable {
 
         boolean server = !(channel instanceof SctpClientChannel);
         Runnable registerTask = new RegisterTask(channel, future, server);
-        notificationHandler = new SctpNotificationHandler(channel, this);
+        notificationHandler = new SctpNotificationHandler(channel);
         Selector selector;
 
         synchronized (startStopLock) {
@@ -345,7 +345,7 @@ class SctpWorker implements Runnable {
             recvBufferPool.release(bb);
         }
 
-        if (channel.channel.isBlocking() && !messageReceived || failure) {
+        if (failure) {
             k.cancel(); // Some JDK implementations run into an infinite loop without this.
             close(channel, succeededFuture(channel));
             return false;
