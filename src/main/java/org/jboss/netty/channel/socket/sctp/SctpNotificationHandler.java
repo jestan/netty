@@ -41,33 +41,8 @@ class SctpNotificationHandler extends AbstractNotificationHandler {
 
     @Override
     public HandlerResult handleNotification(AssociationChangeNotification notification, Object o) {
-        AssociationChangeNotification.AssocChangeEvent assocChangeEvent = notification.event();
-        HandlerResult result = HandlerResult.CONTINUE;
-        switch (assocChangeEvent) {
-            case COMM_UP:
-                fireNotificationReceived(notification, o);
-                result = HandlerResult.CONTINUE;
-                break;
-            case COMM_LOST:
-                Channels.fireChannelDisconnected(channel);
-                result = HandlerResult.RETURN;
-                break;
-            case RESTART:
-                Channels.fireChannelDisconnected(channel);
-                result = HandlerResult.RETURN;
-                break;
-            case SHUTDOWN:
-                Channels.fireChannelClosed(channel);
-                result = HandlerResult.RETURN;
-                break;
-            case CANT_START:
-                Channels.fireChannelClosed(channel);
-                result = HandlerResult.RETURN;
-                break;
-
-        }
-
-        return result;
+        fireNotificationReceived(notification, o);
+        return HandlerResult.CONTINUE;
     }
 
     @Override
