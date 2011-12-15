@@ -16,6 +16,7 @@
 package org.jboss.netty.channel.socket.sctp;
 
 import com.sun.nio.sctp.*;
+import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.logging.InternalLogger;
 import org.jboss.netty.logging.InternalLoggerFactory;
@@ -30,24 +31,43 @@ class SctpNotificationHandler extends AbstractNotificationHandler {
     private static final InternalLogger logger =
             InternalLoggerFactory.getInstance(SctpNotificationHandler.class);
 
-    private final SctpChannelImpl sctpChannel;
-    private final SctpWorker sctpWorker;
+    private final SctpChannelImpl channel;
+    private final ChannelPipeline pipeline;
 
-    public SctpNotificationHandler(SctpChannelImpl sctpChannel, SctpWorker sctpWorker) {
-        this.sctpChannel = sctpChannel;
-        this.sctpWorker = sctpWorker;
+    public SctpNotificationHandler(SctpChannelImpl channel) {
+        this.channel = channel;
+        this.pipeline = channel.getPipeline();
     }
 
     @Override
     public HandlerResult handleNotification(AssociationChangeNotification notification, Object o) {
-        fireNotificationReceived(notification, o);
-        return HandlerResult.CONTINUE;
-    }
+        AssociationChangeNotification.AssocChangeEvent assocChangeEvent = notification.event();
+        HandlerResult result = HandlerResult.CONTINUE;
+        switch (assocChangeEvent) {
+            case COMM_UP:
+                fireNotificationReceived(notification, o);
+                result = HandlerResult.CONTINUE;
+                break;
+            case COMM_LOST:
+                Channels.fireChannelDisconnected(channel);
+                result = HandlerResult.RETURN;
+                break;
+            case RESTART:
+                Channels.fireChannelDisconnected(channel);
+                result = HandlerResult.RETURN;
+                break;
+            case SHUTDOWN:
+                Channels.fireChannelClosed(channel);
+                result = HandlerResult.RETURN;
+                break;
+            case CANT_START:
+                Channels.fireChannelClosed(channel);
+                result = HandlerResult.RETURN;
+                break;
 
-    @Override
-    public HandlerResult handleNotification(Notification notification, Object o) {
-        fireNotificationReceived(notification, o);
-        return HandlerResult.CONTINUE;
+        }
+
+        return result;
     }
 
     @Override
@@ -59,16 +79,16 @@ class SctpNotificationHandler extends AbstractNotificationHandler {
     @Override
     public HandlerResult handleNotification(SendFailedNotification notification, Object o) {
         fireNotificationReceived(notification, o);
-        return HandlerResult.CONTINUE;
+        return HandlerResult.RETURN;
     }
 
     @Override
     public HandlerResult handleNotification(ShutdownNotification notification, Object o) {
-        sctpWorker.close(sctpChannel, Channels.succeededFuture(sctpChannel));
+        Channels.fireChannelDisconnected(channel);
         return HandlerResult.RETURN;
     }
 
     private void fireNotificationReceived(Notification notification, Object o) {
-        sctpChannel.getPipeline().sendUpstream(new SctpNotificationEvent(sctpChannel, notification, o));
+        pipeline.sendUpstream(new SctpNotificationEvent(channel, notification, o));
     }
 }
