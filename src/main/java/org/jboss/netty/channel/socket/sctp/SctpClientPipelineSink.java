@@ -223,7 +223,7 @@ class SctpClientPipelineSink extends AbstractChannelSink {
                 wakenUp.set(false);
 
                 try {
-                    int selectedKeyCount = selector.select(1);
+                    int selectedKeyCount = selector.select();
 
                     // 'wakenUp.compareAndSet(false, true)' is always evaluated
                     // before calling 'selector.wakeup()' to reduce the wake-up

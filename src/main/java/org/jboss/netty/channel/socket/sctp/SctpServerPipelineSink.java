@@ -191,17 +191,17 @@ class SctpServerPipelineSink extends AbstractChannelSink {
     }
 
     private final class Boss implements Runnable {
-        private final Selector selector;
+        private final Selector bossSelector;
         private final SctpServerChannelImpl channel;
 
         Boss(SctpServerChannelImpl channel) throws IOException {
             this.channel = channel;
 
-            selector = Selector.open();
+            bossSelector = Selector.open();
 
             boolean registered = false;
             try {
-                channel.serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+                channel.serverChannel.register(bossSelector, SelectionKey.OP_ACCEPT);
                 registered = true;
             } finally {
                 if (!registered) {
@@ -209,7 +209,7 @@ class SctpServerPipelineSink extends AbstractChannelSink {
                 }
             }
 
-            channel.selector = selector;
+            channel.selector = bossSelector;
         }
 
         @Override
@@ -220,8 +220,8 @@ class SctpServerPipelineSink extends AbstractChannelSink {
             try {
                 for (;;) {
                     try {
-                        if (selector.select(1000) > 0) {
-                            selector.selectedKeys().clear();
+                        if (bossSelector.select() > 0) {
+                            bossSelector.selectedKeys().clear();
                         }
 
                         SctpChannel acceptedSocket = channel.serverChannel.accept();
@@ -239,8 +239,7 @@ class SctpServerPipelineSink extends AbstractChannelSink {
                         // Closed as requested.
                         break;
                     } catch (Throwable e) {
-                        logger.warn(
-                                "Failed to accept a connection.", e);
+                        logger.warn("Failed to accept a connection.", e);
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e1) {
@@ -279,7 +278,7 @@ class SctpServerPipelineSink extends AbstractChannelSink {
         private void closeSelector() {
             channel.selector = null;
             try {
-                selector.close();
+                bossSelector.close();
             } catch (Exception e) {
                 logger.warn("Failed to close a selector.", e);
             }
