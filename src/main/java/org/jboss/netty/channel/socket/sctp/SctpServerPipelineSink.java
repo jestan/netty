@@ -220,7 +220,7 @@ class SctpServerPipelineSink extends AbstractChannelSink {
             try {
                 for (;;) {
                     try {
-                        if (selector.select(5) > 0) {
+                        if (selector.select() > 0) {
                             selector.selectedKeys().clear();
                         }
 
