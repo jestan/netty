@@ -54,7 +54,7 @@ class SctpWorker implements Runnable {
 
     private static final int CONSTRAINT_LEVEL = SctpProviderMetadata.CONSTRAINT_LEVEL;
 
-    static final int CLEANUP_INTERVAL = 256; // XXX Hard-coded value, but won't need customization.
+    static final int CLEANUP_INTERVAL = 64; // XXX Hard-coded value, but won't need customization.
 
     private final Executor executor;
     private boolean started;
